@@ -9,6 +9,14 @@
 #import "SAAppDelegate.h"
 
 #import "SAMasterViewController.h"
+#import "KeychainItemWrapper.h"
+#import "SASideMenuViewController.h"
+
+#define statusbarHeight [UIApplication sharedApplication].statusBarFrame.size.height
+
+
+
+static KeychainItemWrapper *keychain;
 
 @implementation SAAppDelegate
 
@@ -16,15 +24,40 @@
 @synthesize managedObjectModel = _managedObjectModel;
 @synthesize persistentStoreCoordinator = _persistentStoreCoordinator;
 
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    //_primaryKeysForFavorites = [[NSMutableArray alloc] init];
     // Override point for customization after application launch.
-    UINavigationController *navigationController = (UINavigationController *)self.window.rootViewController;
-    SAMasterViewController *controller = (SAMasterViewController *)navigationController.topViewController;
-    controller.managedObjectContext = self.managedObjectContext;
+    //UINavigationController *navigationController = (UINavigationController *)self.window.rootViewController;
+    //SAMasterViewController *controller = (SAMasterViewController *)navigationController.topViewController;
+    //controller.managedObjectContext = self.managedObjectContext;
+    NSLog(@"%@", NSStringFromClass(self.window.rootViewController.class));
+    
     return YES;
 }
-							
+
+
+- (void)showSideMenu:(NSString *)viewControllerIdentifier
+{
+    self.contentViewController = self.window.rootViewController;
+    
+    
+    _menuViewController = [[UIStoryboard storyboardWithName:@"Main" bundle:nil] instantiateViewControllerWithIdentifier:@"SideMenu"];
+    
+    _menuViewController.currentViewController = self.contentViewController;
+    
+    _menuViewController.activeViewControllerIdentifier = viewControllerIdentifier;
+    
+    self.window.rootViewController = _menuViewController;
+    [self.window makeKeyAndVisible];
+}
+
+-(void)hideSideMenu
+{
+    self.window.rootViewController = self.contentViewController;
+}
+
 - (void)applicationWillResignActive:(UIApplication *)application
 {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
@@ -79,7 +112,7 @@
     
     NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
     if (coordinator != nil) {
-        _managedObjectContext = [[NSManagedObjectContext alloc] init];
+        _managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
         [_managedObjectContext setPersistentStoreCoordinator:coordinator];
     }
     return _managedObjectContext;
@@ -146,6 +179,17 @@
 - (NSURL *)applicationDocumentsDirectory
 {
     return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+}
+
+- (KeychainItemWrapper *)keychain
+{
+    if(keychain== nil)
+    {
+        keychain =
+        [[KeychainItemWrapper alloc] initWithIdentifier:@"TestAppLoginData" accessGroup:nil];
+    }
+    
+    return keychain;
 }
 
 @end
